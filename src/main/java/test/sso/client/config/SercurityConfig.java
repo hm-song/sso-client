@@ -1,8 +1,11 @@
 package test.sso.client.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.access.SecurityConfig;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -11,6 +14,7 @@ import org.springframework.security.oauth2.client.OAuth2RestTemplate;
 import org.springframework.security.oauth2.client.filter.OAuth2ClientAuthenticationProcessingFilter;
 import org.springframework.security.oauth2.client.filter.OAuth2ClientContextFilter;
 import org.springframework.security.oauth2.client.token.grant.code.AuthorizationCodeResourceDetails;
+import org.springframework.security.oauth2.common.AuthenticationScheme;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableOAuth2Client;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
@@ -23,6 +27,8 @@ import test.sso.client.oauth.UserInfoTokenServices;
 @EnableWebSecurity
 @EnableOAuth2Client
 public class SercurityConfig extends WebSecurityConfigurerAdapter {
+
+    private static final Logger logger = LoggerFactory.getLogger(SecurityConfig.class);
 
     private String clientId = "demo";
     private String clientSecret = "demo";
@@ -42,7 +48,7 @@ public class SercurityConfig extends WebSecurityConfigurerAdapter {
                 .addFilterBefore(oAuth2ClientContextFilter(), BasicAuthenticationFilter.class)
                 .addFilterBefore(oauth2Filter(), BasicAuthenticationFilter.class)
             .authorizeRequests()
-                .antMatchers("/", "/login**", "/hello").permitAll()
+                .antMatchers("/", "/login**").permitAll()
                 .anyRequest().authenticated()
                 .and()
             .exceptionHandling()
@@ -80,6 +86,9 @@ public class SercurityConfig extends WebSecurityConfigurerAdapter {
         rd.setClientSecret(clientSecret);
         rd.setAccessTokenUri(accessTokenUri);
         rd.setUserAuthorizationUri(authorizationUri);
+        rd.setTokenName("oauth_token");
+        rd.setAuthenticationScheme(AuthenticationScheme.query);
+        rd.setClientAuthenticationScheme(AuthenticationScheme.form);
         return rd;
     }
 }

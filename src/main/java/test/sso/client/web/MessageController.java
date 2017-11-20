@@ -11,6 +11,6 @@ public class MessageController {
     @RequestMapping("/hello")
     @ResponseBody
     public String hello() {
-        return "hellow";
+        return "hello";
     }
 }
