@@ -13,9 +13,8 @@ public class MessageController {
     private static final Logger logger = LoggerFactory.getLogger(MessageController.class);
 
     @RequestMapping("/hello")
-    @ResponseBody
     public String hello() {
-        return "hello";
+        return "index";
     }
 
     @RequestMapping(value = "/denied")

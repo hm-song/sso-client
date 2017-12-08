@@ -3,6 +3,7 @@ package test.sso.client.config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -34,44 +35,56 @@ public class SercurityConfig extends WebSecurityConfigurerAdapter {
     /**
      * 클라이언트를 인증 서버로부터 필요한 ID. 서버와 동일한 값이어야 한다
      */
-    private String clientId = "demo";
+    @Value("${oauth2.client.clientId}")
+    private String clientId;
 
     /**
      * 클라이언트를 인증 서버로부터 필요한 비밀 키. 서버와 동일한 값이어야 한다
      */
-    private String clientSecret = "demo";
+    @Value("${oauth2.client.clientSecret}")
+    private String clientSecret;
 
-    private String scope = "DOMAIN_SERVICE";
+    /**
+     * 사용하려고 하는 리소스의 스코프
+     */
+    @Value("${oauth2.client.scope}")
+    private String scope;
 
     /**
      * Authorization grant를 위한 인증서버 URI
      */
-    private String authorizationUri = "http://localhost:9999/auth/oauth/authorize";
+    @Value("${oauth2.client.authorizationUri}")
+    private String authorizationUri;
 
     /**
      * 토큰을 발급받기 위한 인증서버 URI
      */
-    private String accessTokenUri = "http://localhost:9999/auth/oauth/token";
+    @Value("${oauth2.client.accessTokenUri}")
+    private String accessTokenUri;
 
     /**
      * 토큰으로 사용자 정보 획득을 위한 URI
      */
-    private String userInfoEndpointUrl = "http://localhost:9999/auth/me";
+    @Value("${oauth2.client.userInfoEndpointUrl}")
+    private String userInfoEndpointUrl;
 
     /**
      * 로컬에서 OAuth 인증을 처리할 URL
      */
-    private String localOauth2Entrypoint = "/auth";
+    @Value("${oauth2.client.localOauth2EntryPoint}")
+    private String localOauth2EntryPoint;
 
     /**
      * 인증서버로 보낼 사용자 인증정보 전달 방식. 기본은 header에 담는다.
      */
-    private AuthenticationScheme authenticationScheme = AuthenticationScheme.header;
+    @Value("${oauth2.client.userAuthenticationScheme}")
+    private AuthenticationScheme userAuthenticationScheme;
 
     /**
      * 인증서버로 보낼 클라이언트 인증정보 전달 방식. 기본은 header에 담는다.
      */
-    private AuthenticationScheme clientAuthenticationScheme = AuthenticationScheme.header;
+    @Value("${oauth2.client.clientAuthenticationScheme}")
+    private AuthenticationScheme clientAuthenticationScheme;
 
     @Autowired
     OAuth2ClientContext oauth2ClientContext;
@@ -91,7 +104,7 @@ public class SercurityConfig extends WebSecurityConfigurerAdapter {
 
                 // 인증되지 않은 요청을 인증 필터로 redirect. '/auth' 에 OAuth 인증 필터가 적용된다.
             .exceptionHandling()
-                .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint(localOauth2Entrypoint));
+                .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint(localOauth2EntryPoint));
     }
 
 
@@ -121,7 +134,7 @@ public class SercurityConfig extends WebSecurityConfigurerAdapter {
         UserInfoTokenServices tokenServices = userInfoTokenServices();
         tokenServices.setRestTemplate(restTemplate);
 
-        OAuth2ClientAuthenticationProcessingFilter filter = new OAuth2ClientAuthenticationProcessingFilter(localOauth2Entrypoint);
+        OAuth2ClientAuthenticationProcessingFilter filter = new OAuth2ClientAuthenticationProcessingFilter(localOauth2EntryPoint);
         filter.setRestTemplate(restTemplate);
         filter.setTokenServices(tokenServices);
         filter.setAuthenticationFailureHandler(new CustomSimpleAuthFailHandler());
@@ -160,7 +173,7 @@ public class SercurityConfig extends WebSecurityConfigurerAdapter {
         rd.setAccessTokenUri(accessTokenUri);
         rd.setUserAuthorizationUri(authorizationUri);
         rd.setScope(Arrays.asList(scope));
-        rd.setAuthenticationScheme(authenticationScheme);
+        rd.setAuthenticationScheme(userAuthenticationScheme);
         rd.setClientAuthenticationScheme(clientAuthenticationScheme);
         return rd;
     }
