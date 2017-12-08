@@ -1,5 +1,7 @@
 package test.sso.client.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,6 +19,7 @@ import org.springframework.security.web.authentication.LoginUrlAuthenticationEnt
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.web.filter.RequestContextFilter;
+import test.sso.client.filter.CustomSimpleAuthFailHandler;
 import test.sso.client.oauth.UserInfoTokenServices;
 
 import java.util.Arrays;
@@ -25,6 +28,8 @@ import java.util.Arrays;
 @EnableWebSecurity
 @EnableOAuth2Client
 public class SercurityConfig extends WebSecurityConfigurerAdapter {
+
+    private static final Logger logger = LoggerFactory.getLogger(SercurityConfig.class);
 
     /**
      * 클라이언트를 인증 서버로부터 필요한 ID. 서버와 동일한 값이어야 한다
@@ -35,6 +40,8 @@ public class SercurityConfig extends WebSecurityConfigurerAdapter {
      * 클라이언트를 인증 서버로부터 필요한 비밀 키. 서버와 동일한 값이어야 한다
      */
     private String clientSecret = "demo";
+
+    private String scope = "DOMAIN_SERVICE";
 
     /**
      * Authorization grant를 위한 인증서버 URI
@@ -78,10 +85,11 @@ public class SercurityConfig extends WebSecurityConfigurerAdapter {
                 .addFilterBefore(oAuth2ClientContextFilter(), BasicAuthenticationFilter.class)
                 .addFilterBefore(oauth2Filter(), BasicAuthenticationFilter.class)
             .authorizeRequests()
+                .antMatchers("/denied").permitAll()
                 .anyRequest().authenticated()
                 .and()
 
-            // 인증되지 않은 요청을 인증 필터로 redirect. '/auth' 에 OAuth 인증 필터가 적용된다.
+                // 인증되지 않은 요청을 인증 필터로 redirect. '/auth' 에 OAuth 인증 필터가 적용된다.
             .exceptionHandling()
                 .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint(localOauth2Entrypoint));
     }
@@ -116,6 +124,7 @@ public class SercurityConfig extends WebSecurityConfigurerAdapter {
         OAuth2ClientAuthenticationProcessingFilter filter = new OAuth2ClientAuthenticationProcessingFilter(localOauth2Entrypoint);
         filter.setRestTemplate(restTemplate);
         filter.setTokenServices(tokenServices);
+        filter.setAuthenticationFailureHandler(new CustomSimpleAuthFailHandler());
 
         // OAuth 인증이 성공할 경우 리다이렉트 할 URI
         filter.setAuthenticationSuccessHandler(new SimpleUrlAuthenticationSuccessHandler("/hello"));
@@ -150,7 +159,7 @@ public class SercurityConfig extends WebSecurityConfigurerAdapter {
         rd.setClientSecret(clientSecret);
         rd.setAccessTokenUri(accessTokenUri);
         rd.setUserAuthorizationUri(authorizationUri);
-        rd.setScope(Arrays.asList("read"));
+        rd.setScope(Arrays.asList(scope));
         rd.setAuthenticationScheme(authenticationScheme);
         rd.setClientAuthenticationScheme(clientAuthenticationScheme);
         return rd;
